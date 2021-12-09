@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/oyurcka/CRUD/model/app"
-	"github.com/oyurcka/CRUD/model/person"
+	"github.com/oyurcka/CRUD/person"
 
 	"github.com/sirupsen/logrus"
 )
@@ -28,9 +28,9 @@ func (p *personLogic) Get(c context.Context) ([]*app.Person, error) {
 	ctx, cancel := context.WithTimeout(c, p.contextTimeout)
 	defer cancel()
 
-	listPerson, err := person.personRepo.Get(ctx)
+	listPerson, err := p.personRepo.Get(ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	return listPerson, nil
@@ -40,7 +40,7 @@ func (p *personLogic) GetByID(c context.Context, id int64) (*app.Person, error) 
 	ctx, cancel := context.WithTimeout(c, p.contextTimeout)
 	defer cancel()
 
-	res, err := person.personRepo.GetByID(ctx, id)
+	res, err := p.personRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func (p *personLogic) Store(c context.Context, per *app.Person) error {
 
 	existedPerson, _ := p.GetByID(ctx, per.ID)
 	if existedPerson != nil {
-		logrus.Error("Person already exist")
-		return errors.New("Person already exist")
+		logrus.Error("person already exist")
+		return errors.New("person already exist")
 	}
 
 	err := p.personRepo.Store(ctx, per)
@@ -66,7 +66,7 @@ func (p *personLogic) Store(c context.Context, per *app.Person) error {
 	return nil
 }
 
-func (p *personLogic) Update(c context.Context, per app.Person) error {
+func (p *personLogic) Update(c context.Context, per *app.Person) error {
 	ctx, cancel := context.WithTimeout(c, p.contextTimeout)
 	defer cancel()
 
@@ -83,8 +83,8 @@ func (p *personLogic) Delete(c context.Context, id int64) error {
 	}
 
 	if existedPerson == nil {
-		logrus.Error("Person does not exist")
-		return errors.New("Person does not exist")
+		logrus.Error("person does not exist")
+		return errors.New("person does not exist")
 	}
 
 	return p.personRepo.Delete(ctx, id)

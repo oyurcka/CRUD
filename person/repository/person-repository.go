@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/oyurcka/CRUD/model/app"
-	"github.com/oyurcka/CRUD/model/person"
+	"github.com/oyurcka/CRUD/person"
 
 	"github.com/sirupsen/logrus"
 )
@@ -35,13 +35,13 @@ func (p *postgresqllPersonRepository) get(ctx context.Context, query string, arg
 
 	result := make([]*app.Person, 0)
 	for rows.Next() {
-		t := new(app.Person)
+		r := new(app.Person)
 		err = rows.Scan(
-			&t.ID,
-			&t.Email,
-			&t.Phone,
-			&t.FirstName,
-			&t.LastName,
+			&r.ID,
+			&r.Email,
+			&r.Phone,
+			&r.FirstName,
+			&r.LastName,
 		)
 
 		if err != nil {
@@ -49,15 +49,14 @@ func (p *postgresqllPersonRepository) get(ctx context.Context, query string, arg
 			return nil, err
 		}
 
-		result = append(result, t)
+		result = append(result, r)
 	}
 
 	return result, nil
 }
 
 func (p *postgresqllPersonRepository) Get(ctx context.Context) ([]*app.Person, error) {
-	query := `SELECT id, email, phone, firstname, lastname
-  				FROM person ORDER BY id `
+	query := `SELECT * FROM person ORDER BY id`
 
 	res, err := p.get(ctx, query)
 	if err != nil {
@@ -69,8 +68,8 @@ func (p *postgresqllPersonRepository) Get(ctx context.Context) ([]*app.Person, e
 }
 
 func (p *postgresqllPersonRepository) GetByID(ctx context.Context, id int64) (res *app.Person, err error) {
-	query := `SELECT id, email, phone, firstname, lastname
-				FROM person WHERE ID = ?`
+	query := `SELECT *
+				FROM person WHERE id = ?`
 
 	list, err := p.get(ctx, query, id)
 	if err != nil {
@@ -81,15 +80,16 @@ func (p *postgresqllPersonRepository) GetByID(ctx context.Context, id int64) (re
 	if len(list) > 0 {
 		res = list[0]
 	} else {
-		logrus.Error(errors.New("Person not found"))
-		return nil, errors.New("Person not found")
+		logrus.Error(errors.New("person not found"))
+		return nil, errors.New("person not found")
 	}
 
 	return
 }
 
 func (p *postgresqllPersonRepository) Store(ctx context.Context, per *app.Person) error {
-	query := `INSERT person SET email=?, phone=?, firstname=?, lastname=?`
+	query := `INSERT INTO person (email, phone, firstname, lastname) 
+				VALUES (?, ?, ?, ?)`
 	stmt, err := p.Conn.PrepareContext(ctx, query)
 	if err != nil {
 		logrus.Error(err)
@@ -133,7 +133,7 @@ func (p *postgresqllPersonRepository) Update(ctx context.Context, per *app.Perso
 		return err
 	}
 	if rowsAffected != 1 {
-		logrus.Error(errors.New("More than one row affected"))
+		logrus.Error(errors.New("more than one row affected"))
 		return err
 	}
 
@@ -162,7 +162,7 @@ func (p *postgresqllPersonRepository) Delete(ctx context.Context, id int64) erro
 	}
 
 	if rowsAffected != 1 {
-		logrus.Error(errors.New("More than one row affected"))
+		logrus.Error(errors.New("more than one row affected"))
 		return err
 	}
 

@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Get(ctx context.Context) (res []*app.Person, err error)
+	Get(ctx context.Context) ([]*app.Person, error)
 	GetByID(ctx context.Context, id int64) (*app.Person, error)
 	Store(ctx context.Context, per *app.Person) error
 	Update(ctx context.Context, per *app.Person) error

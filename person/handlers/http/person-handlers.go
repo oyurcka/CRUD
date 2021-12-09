@@ -2,11 +2,12 @@ package http
 
 import (
 	"context"
+	"crud/person"
 	"net/http"
 	"strconv"
 
 	"github.com/oyurcka/CRUD/model/app"
-	"github.com/oyurcka/CRUD/model/person"
+	_ "github.com/oyurcka/CRUD/person"
 
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
@@ -25,10 +26,10 @@ func NewPersonHandler(e *echo.Echo, pl person.Logic) {
 	handler := &PersonHandler{
 		PersonLogic: pl,
 	}
-	e.GET("/persons", handler.Get)
+	e.GET("/persons/", handler.Get)
 	e.GET("/persons/:id", handler.GetByID)
-	e.POST("/persons", handler.Store)
-	e.PUT("/persons", handler.Update)
+	e.POST("/persons/", handler.Store)
+	e.PUT("/persons/", handler.Update)
 	e.DELETE("/persons/:id", handler.Delete)
 }
 
@@ -37,11 +38,12 @@ func (ph *PersonHandler) Get(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+
 	listPerson, err := ph.PersonLogic.Get(ctx)
 
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, listPerson)
@@ -63,7 +65,7 @@ func (ph *PersonHandler) GetByID(c echo.Context) error {
 	per, err := ph.PersonLogic.GetByID(ctx, id)
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, per)
 }
@@ -79,14 +81,14 @@ func isRequestValid(per *app.Person) (bool, error) {
 }
 
 func (ph *PersonHandler) Store(c echo.Context) error {
-	var person app.Person
-	err := c.Bind(&person)
+	var per app.Person
+	err := c.Bind(&per)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	if ok, err := isRequestValid(&person); !ok {
+	if ok, err := isRequestValid(&per); !ok {
 		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -96,24 +98,23 @@ func (ph *PersonHandler) Store(c echo.Context) error {
 		ctx = context.Background()
 	}
 
-	err = ph.PersonLogic.Store(ctx, &person)
-
+	err = ph.PersonLogic.Store(ctx, &per)
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, person)
+	return c.JSON(http.StatusCreated, per)
 }
 
 func (ph *PersonHandler) Update(c echo.Context) error {
-	var person app.Person
-	err := c.Bind(&person)
+	var per app.Person
+	err := c.Bind(&per)
 	if err != nil {
 		logrus.Error(err)
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	if ok, err := isRequestValid(&person); !ok {
+	if ok, err := isRequestValid(&per); !ok {
 		logrus.Error(err)
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -123,13 +124,13 @@ func (ph *PersonHandler) Update(c echo.Context) error {
 		ctx = context.Background()
 	}
 
-	err = ph.PersonLogic.Update(ctx, &person)
+	err = ph.PersonLogic.Update(ctx, &per)
 
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, person)
+	return c.JSON(http.StatusOK, per)
 }
 
 func (ph *PersonHandler) Delete(c echo.Context) error {
@@ -147,7 +148,7 @@ func (ph *PersonHandler) Delete(c echo.Context) error {
 	err = ph.PersonLogic.Delete(ctx, id)
 	if err != nil {
 		logrus.Error(err)
-		return c.JSON(ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
 	return c.NoContent(http.StatusNoContent)
